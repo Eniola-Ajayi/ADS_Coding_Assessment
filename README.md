@@ -124,5 +124,5 @@ without changing any of the answers.
   Explorer*, a Streamlit web app that uses the Question 5 API as its backend.
   Investigators can find cohorts, see which subjects need attention first and
   open a subject's AE history, without writing code. It reuses the Question 5
-  code unchanged, adds three read-only endpoints, and has its own tests
+  code unchanged, adds three read-only endpoints, and has its own tests.
 
