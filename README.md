@@ -126,8 +126,3 @@ without changing any of the answers.
   open a subject's AE history, without writing code. It reuses the Question 5
   code unchanged, adds three read-only endpoints, and has its own tests.
 
-## Use of AI
-AI coding assistants were used, as the brief allows, to speed up research of
-package APIs, drafting and review. All code was reviewed, run and checked
-against independent references (base R, `pharmaversesdtm::ds`) before
-submission.
