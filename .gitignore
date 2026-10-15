@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.venv/
+.Rproj.user/
+.Rhistory
+.RData
+*.Rcheck/
+question_1/descriptive_stats/*.tar.gz
+.pytest_cache/
+.idea/
+
+# Secrets: never commit API keys
+.env

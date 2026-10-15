@@ -1,0 +1,5 @@
+pandas>=2.0
+pydantic>=2.0
+# Optional: only needed to use a real LLM (set OPENAI_API_KEY)
+langchain-core>=0.3
+langchain-openai>=0.2

@@ -1,0 +1,285 @@
+
+==============================================================================
+Install missing packages
+==============================================================================
+  devtools         2.5.2
+  roxygen2         8.1.0
+  testthat         3.3.2
+  dplyr            1.2.1
+  stringr          1.6.0
+  ggplot2          4.0.3
+  scales           1.4.0
+  gt               1.3.0
+  gtsummary        2.6.1
+  admiral          1.5.0
+  sdtm.oak         0.2.0
+  pharmaverseraw   0.1.1
+  pharmaversesdtm  1.5.0
+  pharmaverseadam  1.3.0
+--> OK (0.9s)
+
+==============================================================================
+Q1a: document (roxygen2 -> man/ and NAMESPACE)
+==============================================================================
+ℹ Updating descriptiveStats documentation
+ℹ Loading descriptiveStats
+--> OK (0.3s)
+
+==============================================================================
+Q1b: unit tests
+==============================================================================
+ℹ Testing descriptiveStats
+calc_mean: ...............
+calc_median: .............
+calc_mode: ..........
+calc_quartiles: .....................................................................................................
+input-validation: .................................................................................................
+
+══ DONE ════════════════════════════════════════════════
+Tests: 236  Failed: 0  Errors: 0  Skipped: 0 
+--> OK (1.6s)
+
+==============================================================================
+Q1c: R CMD check
+==============================================================================
+Errors: 0  Warnings: 0  Notes: 0 
+--> OK (13.7s)
+
+==============================================================================
+Q1d: install and run the example
+==============================================================================
+  mean median   mode     q1     q3    iqr 
+  4.30   4.50   5.00   2.25   5.00   2.75 
+--> OK (1.4s)
+
+==============================================================================
+Q2: SDTM DS domain
+==============================================================================
+G3;ℹ These terms could not be mapped per the controlled terminology: "Randomized", "Completed", "Study Terminated by Sponsor", "Screen Failure", and "Lost to Follow-Up".
+gG3;ℹ These terms could not be mapped per the controlled terminology: "Ambul Ecg Removal", "Unscheduled 6.1", "Unscheduled 1.1", "Unscheduled 5.1", "Unscheduled 4.1", "Unscheduled 8.2", and "Unscheduled 13.1".
+gG3;DS domain created: 850 records, 306 subjects
+g# A tibble: 13 × 3
+   DSCAT              DSDECOD                         n
+   <chr>              <chr>                       <int>
+ 1 DISPOSITION EVENT  ADVERSE EVENT                  92
+ 2 DISPOSITION EVENT  COMPLETED                     110
+ 3 DISPOSITION EVENT  DEATH                           3
+ 4 DISPOSITION EVENT  LACK OF EFFICACY                4
+ 5 DISPOSITION EVENT  LOST TO FOLLOW-UP               2
+ 6 DISPOSITION EVENT  PHYSICIAN DECISION              3
+ 7 DISPOSITION EVENT  PROTOCOL VIOLATION              6
+ 8 DISPOSITION EVENT  SCREEN FAILURE                 52
+ 9 DISPOSITION EVENT  STUDY TERMINATED BY SPONSOR     7
+10 DISPOSITION EVENT  WITHDRAWAL BY SUBJECT          27
+11 OTHER EVENT        FINAL LAB VISIT               254
+12 OTHER EVENT        FINAL RETRIEVAL VISIT          36
+13 PROTOCOL MILESTONE RANDOMIZED                    254
+# A tibble: 19 × 3
+   VISITNUM VISIT                 n
+      <dbl> <chr>             <int>
+ 1      1   SCREENING 1          57
+ 2      1.1 UNSCHEDULED 1.1       2
+ 3      3   BASELINE            254
+ 4      4   WEEK 2               46
+ 5      4.1 UNSCHEDULED 4.1       1
+ 6      5   WEEK 4               27
+ 7      5.1 UNSCHEDULED 5.1       1
+ 8      6   AMBUL ECG REMOVAL     4
+ 9      6.1 UNSCHEDULED 6.1       1
+10      7   WEEK 6               42
+11      8   WEEK 8               31
+12      8.2 UNSCHEDULED 8.2       2
+13      9   WEEK 12              51
+14     10   WEEK 16              33
+15     11   WEEK 20              27
+16     12   WEEK 24              14
+17     13   WEEK 26             219
+18     13.1 UNSCHEDULED 13.1      1
+19    201   RETRIEVAL            37
+G3;Records matched to pharmaversesdtm::ds on USUBJID, DSDECOD, DSSTDTC: 850 of 850
+g# A tibble: 7 × 3
+  variable records_compared matching
+  <chr>               <int>    <dbl>
+1 STUDYID               850      850
+2 DSTERM                850      850
+3 DSCAT                 850      850
+4 VISITNUM              850      850
+5 VISIT                 850      850
+6 DSDTC                 850      850
+7 DSSTDY                850      850
+--> OK (0.8s)
+
+==============================================================================
+Q3: ADaM ADSL
+==============================================================================
+G3;ADSL created: 306 subjects, 41 variables
+g# A tibble: 2 × 3
+  AGEGR9N AGEGR9      n
+    <dbl> <chr>   <int>
+1       2 18 - 50     1
+2       3 >50       305
+# A tibble: 1 × 2
+  ITTFL     n
+  <chr> <int>
+1 Y       306
+# A tibble: 2 × 2
+  ABNSBPFL     n
+  <chr>    <int>
+1 N           73
+2 Y          233
+# A tibble: 2 × 2
+  CARPOPFL     n
+  <chr>    <int>
+1 Y           44
+2 <NA>       262
+# A tibble: 2 × 2
+  TRTSTMF     n
+  <chr>   <int>
+1 H         254
+2 <NA>       52
+G3;Subjects matched to pharmaverseadam::adsl: 306 of 306
+g# A tibble: 7 × 4
+  variable compared_with       records_compared matching
+  <chr>    <chr>                          <int>    <dbl>
+1 TRTSDTM  pharmaverseadam::a…              306      306
+2 TRTSTMF  pharmaverseadam::a…              306      306
+3 TRTEDTM  pharmaverseadam::a…              306      306
+4 TRTETMF  pharmaverseadam::a…              306      306
+5 TRTSDT   pharmaverseadam::a…              306      306
+6 TRTEDT   pharmaverseadam::a…              306      306
+7 LSTALVDT independent re-der…              306      306
+--> OK (1.7s)
+
+==============================================================================
+Q4.1: AE summary table
+==============================================================================
+G3;Saved: question_4_tlg/output/ae_summary_table.html
+g--> OK (0.5s)
+
+==============================================================================
+Q4.2: AE visualisations
+==============================================================================
+G3;Saved plots to question_4_tlg/output
+g# A tibble: 10 × 5
+   AETERM                     n_subj    pct  lower upper
+   <fct>                       <int>  <dbl>  <dbl> <dbl>
+ 1 PRURITUS                       57 0.253  0.198  0.315
+ 2 APPLICATION SITE PRURITUS      50 0.222  0.170  0.282
+ 3 ERYTHEMA                       38 0.169  0.122  0.224
+ 4 APPLICATION SITE ERYTHEMA      30 0.133  0.0918 0.185
+ 5 RASH                           29 0.129  0.0880 0.180
+ 6 DIZZINESS                      22 0.0978 0.0623 0.144
+ 7 APPLICATION SITE DERMATIT…     21 0.0933 0.0587 0.139
+ 8 APPLICATION SITE IRRITATI…     21 0.0933 0.0587 0.139
+ 9 DIARRHOEA                      18 0.08   0.0481 0.123
+10 SINUS BRADYCARDIA              17 0.0756 0.0446 0.118
+--> OK (0.5s)
+
+==============================================================================
+Q4.3: AE listing
+==============================================================================
+G3;Saved: question_4_tlg/output/ae_listings.html (1122 AE records)
+g--> OK (0.2s)
+
+==============================================================================
+Data for Q5/Q6: export adae.csv
+==============================================================================
+G3;Wrote data/adae.csv: 1191 records, 225 subjects
+g--> OK (0.0s)
+
+==============================================================================
+Output files
+==============================================================================
+                                                 file
+1                                       data/adae.csv
+2                                  data/export_adae.R
+3                       question_2_sdtm/output/ds.csv
+4                       question_2_sdtm/output/ds.rds
+5                     question_3_adam/output/adsl.csv
+6                     question_3_adam/output/adsl.rds
+7              question_4_tlg/output/ae_listings.html
+8  question_4_tlg/output/ae_severity_by_treatment.png
+9         question_4_tlg/output/ae_summary_table.html
+10       question_4_tlg/output/top10_ae_incidence.png
+      kb
+1  277.9
+2    1.2
+3  110.5
+4   10.2
+5  109.3
+6   15.9
+7  466.5
+8   73.1
+9   77.1
+10 117.9
+--> OK (0.0s)
+
+==============================================================================
+Session info
+==============================================================================
+R version 4.6.1 (2026-06-24 ucrt)
+Platform: x86_64-w64-mingw32/x64
+Running under: Windows 11 x64 (build 26300)
+
+Matrix products: default
+  LAPACK version 3.12.1
+
+locale:
+[1] LC_COLLATE=English_United Kingdom.utf8 
+[2] LC_CTYPE=English_United Kingdom.utf8   
+[3] LC_MONETARY=English_United Kingdom.utf8
+[4] LC_NUMERIC=C                           
+[5] LC_TIME=English_United Kingdom.utf8    
+
+time zone: Europe/London
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets 
+[6] methods   base     
+
+other attached packages:
+ [1] ggplot2_4.0.3          gt_1.3.0              
+ [3] gtsummary_2.6.1        stringr_1.6.0         
+ [5] admiral_1.5.0          dplyr_1.2.1           
+ [7] pharmaversesdtm_1.5.0  pharmaverseraw_0.1.1  
+ [9] sdtm.oak_0.2.0         descriptiveStats_0.1.0
+[11] testthat_3.3.2        
+
+loaded via a namespace (and not attached):
+ [1] gtable_0.3.6          xfun_0.61            
+ [3] devtools_2.5.2        processx_3.9.0       
+ [5] callr_3.8.0           vctrs_0.7.3          
+ [7] tools_4.6.1           generics_0.1.4       
+ [9] curl_8.0.0            tibble_3.3.1         
+[11] pkgconfig_2.0.3       xopen_1.0.1          
+[13] RColorBrewer_1.1-3    S7_0.2.2             
+[15] desc_1.4.3            assertthat_0.2.1     
+[17] lifecycle_1.0.5       compiler_4.6.1       
+[19] farver_2.1.2          textshaping_1.0.5    
+[21] brio_1.1.5            rdtools_0.1.0        
+[23] litedown_0.11         sass_0.4.10          
+[25] htmltools_0.5.9       usethis_3.2.2        
+[27] pillar_1.11.1         tidyr_1.3.2          
+[29] ellipsis_0.3.3        cachem_1.1.0         
+[31] sessioninfo_1.2.4     commonmark_2.0.0     
+[33] tidyselect_1.2.1      digest_0.6.39        
+[35] stringi_1.8.9         purrr_1.2.2          
+[37] labeling_0.4.3        rprojroot_2.1.1      
+[39] fastmap_1.2.0         grid_4.6.1           
+[41] cli_3.6.6             magrittr_2.0.5       
+[43] cards_0.9.0           utf8_1.2.6           
+[45] pkgbuild_1.4.8        withr_3.0.3          
+[47] admiraldev_1.5.0      prettyunits_1.2.0    
+[49] waldo_0.6.2           scales_1.4.0         
+[51] lubridate_1.9.5       timechange_0.4.0     
+[53] roxygen2_8.1.0        otel_0.2.0           
+[55] pharmaverseadam_1.3.0 ragg_1.5.2           
+[57] hms_1.1.4             memoise_2.0.1        
+[59] evaluate_1.0.5        knitr_1.52           
+[61] rcmdcheck_1.4.0       markdown_2.0         
+[63] rlang_1.3.0           glue_1.8.1           
+[65] xml2_1.6.0            pkgload_1.5.3        
+[67] rstudioapi_0.19.0     R6_2.6.1             
+[69] systemfonts_1.3.2     fs_2.1.0             
+--> OK (0.0s)

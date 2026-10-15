@@ -1,0 +1,16 @@
+# Streamlit settings for the investigator app (read when you run
+# `streamlit run app.py` from this folder).
+
+[theme]
+base = "light"
+# A calm clinical teal for buttons and controls. Red, amber and green are kept
+# for the risk categories only, so a control never looks like a risk signal.
+primaryColor = "#0b6e75"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#eef3f5"
+textColor = "#1d2733"
+font = "sans serif"
+
+[browser]
+# Don't send usage statistics to Streamlit.
+gatherUsageStats = false

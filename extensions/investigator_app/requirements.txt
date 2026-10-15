@@ -1,0 +1,6 @@
+# Question 5 API dependencies (FastAPI, uvicorn, pandas, pydantic, pytest, ...)
+-r ../../question_5_api/requirements.txt
+
+# Investigator app
+streamlit>=1.30
+requests>=2.31
