@@ -1,7 +1,7 @@
 Package: descriptiveStats
 Type: Package
-Title: Descriptive Statistics for Numeric Vectors
-Version: 0.1.0
+Title: Descriptive Statistics for Numeric Vectors and Data Frames
+Version: 0.2.0
 Authors@R:
     person("Eniola", "Ajayi", email = "eniolaajayi.py@gmail.com",
            role = c("aut", "cre"))
@@ -11,12 +11,16 @@ Description: Implements common descriptive statistics from first principles:
     values, empty vectors and single values consistently, and gives
     informative error messages. Quartiles support the Hyndman and Fan (1996)
     sample quantile definitions used by default in R (type 7), SAS (type 2)
-    and SPSS/Minitab (type 6).
+    and SPSS/Minitab (type 6). describe_stats() applies all of them to the
+    numeric columns of a data frame, overall or by group, like PROC MEANS
+    with a CLASS statement in SAS.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Depends:
     R (>= 4.2.0)
 Suggests:
+    dplyr,
+    pharmaverseadam,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3
 Roxygen: list(markdown = TRUE)

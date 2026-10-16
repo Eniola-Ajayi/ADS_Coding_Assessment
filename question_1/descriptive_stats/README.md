@@ -12,6 +12,7 @@ consistent input validation, documented edge-case behaviour and a full
 | `calc_q1(x, na.rm = FALSE, type = 7)` | First quartile (25th percentile) |
 | `calc_q3(x, na.rm = FALSE, type = 7)` | Third quartile (75th percentile) |
 | `calc_iqr(x, na.rm = FALSE, type = 7)` | Interquartile range, Q3 - Q1 |
+| `describe_stats(data, vars, by, na.rm = TRUE, type = 7)` | All of the above for the numeric columns of a data frame, overall or by group |
 
 ## Installation
 
@@ -35,6 +36,42 @@ calc_iqr(data)     # 2.75
 
 calc_q1(data, type = 2)  # 2  (SAS default, PCTLDEF=5)
 ```
+
+### Data frames and groups: `describe_stats()`
+
+Beyond the brief: `describe_stats()` applies every statistic to the numeric
+columns of a data frame, overall or within groups, the R equivalent of
+`PROC MEANS` with a `CLASS` statement. It returns one row per group and
+variable with `n`, `n_missing`, `mean`, `median`, `mode`, `q1`, `q3` and
+`iqr`.
+
+```r
+adsl <- pharmaverseadam::adsl
+
+describe_stats(adsl, vars = "AGE")                        # whole study
+describe_stats(adsl, vars = "AGE", by = "TRT01A")         # by treatment arm
+describe_stats(adsl, vars = "AGE", by = c("TRT01A", "SEX"), type = 2)  # SAS quartiles
+
+# dplyr grouped data frames work too
+adsl |> dplyr::group_by(TRT01A) |> describe_stats(vars = "AGE")
+```
+
+* Every value comes from the vector functions above, so results are
+  identical to calling them on each subset (and the tests check this).
+* Missing values in the analysis columns are removed by default
+  (`na.rm = TRUE`, as in `PROC MEANS`) and counted in `n_missing`.
+* Missing values in a grouping column form their own `NA` group, so no
+  records are dropped silently (`PROC MEANS` drops them unless `MISSING` is
+  set).
+* `mode` is a character column, because there can be several modes
+  (e.g. `"1, 2"`).
+* No extra package dependencies: grouped data frames are recognised without
+  importing dplyr.
+* **Validated against a published table:** grouped by planned arm
+  (`TRT01P`), the age N, mean and median of every arm match Table 14-2.01
+  (Summary of Demographic and Baseline Characteristics) of the CDISC Pilot
+  study, as [reproduced by the R Consortium](https://rconsortium.github.io/submissions-pilot3-adam/main/articles/tlf-demographic.html).
+  A unit test checks this on every run.
 
 ### A note on the expected values in the assessment brief
 

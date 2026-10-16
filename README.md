@@ -73,6 +73,10 @@ cd question_6_genai && pip install -r requirements.txt && python test_agent.py
   (2.5 / 5.5) do not match the example data (the mean is 4.3, and no standard
   quantile definition gives 2.5 / 5.5). Details are in the package README.
 
+* **Beyond the brief:** `describe_stats()` applies all six statistics to the
+    numeric columns of a data frame, overall or by group (like `PROC MEANS`
+    with `CLASS`), and also accepts tibbles and dplyr grouped data frames.
+
 ### Question 2: SDTM DS domain (`{sdtm.oak}`)
 * Maps `pharmaverseraw::ds_raw` following the pharmaverse AE example pattern:
   oak id vars -> topic variable -> qualifiers/timing -> derived variables.

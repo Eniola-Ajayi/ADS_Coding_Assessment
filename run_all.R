@@ -99,17 +99,25 @@ step("Q1d: install and run the example", {
   # devtools::install(), the usual call when developing a package.
   if ("descriptiveStats" %in% loadedNamespaces()) pkgload::unload("descriptiveStats")
   install.packages(pkg, repos = NULL, type = "source", quiet = TRUE)
-  library(descriptiveStats)
-  data <- c(1, 2, 2, 3, 4, 5, 5, 5, 6, 10)
-  # Namespace-qualified, so draft functions of the same name cannot mask them
-  print(c(
-    mean   = descriptiveStats::calc_mean(data),
-    median = descriptiveStats::calc_median(data),
-    mode   = descriptiveStats::calc_mode(data),
-    q1     = descriptiveStats::calc_q1(data),
-    q3     = descriptiveStats::calc_q3(data),
-    iqr    = descriptiveStats::calc_iqr(data)
-  ))
+
+  # The example runs in a fresh R process, as a user would after installing.
+  # Loading a package in the same session that just reinstalled it can fail
+  # ("lazy-load database ... is corrupt") if an older copy was loaded earlier.
+  demo <- tempfile(fileext = ".R")
+  writeLines(c(
+    "library(descriptiveStats)",
+    "data <- c(1, 2, 2, 3, 4, 5, 5, 5, 6, 10)",
+    "print(c(mean = calc_mean(data), median = calc_median(data),",
+    "        mode = calc_mode(data), q1 = calc_q1(data), q3 = calc_q3(data),",
+    "        iqr = calc_iqr(data)))",
+    "# Beyond the brief: a data frame by group (like PROC MEANS with CLASS)",
+    "print(describe_stats(pharmaverseadam::adsl, vars = 'AGE', by = 'TRT01A'))"
+  ), demo)
+  output <- system2(file.path(R.home("bin"), "Rscript"), shQuote(demo),
+                    stdout = TRUE, stderr = TRUE)
+  cat(output, sep = "\n")
+  status <- attr(output, "status")
+  if (!is.null(status) && status != 0) stop("the example script failed (see above)")
 })
 
 # -----------------------------------------------------------------------------
