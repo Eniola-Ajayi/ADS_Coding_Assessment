@@ -41,7 +41,7 @@ ae <- convert_blanks_to_na(pharmaversesdtm::ae)
 # -----------------------------------------------------------------------------
 # 2. Start ADSL from DM (one record per subject)
 # -----------------------------------------------------------------------------
-adsl <- dm %>%
+adsl_1 <- dm %>%
   select(-DOMAIN) %>%
   mutate(TRT01P = ARM, TRT01A = ACTARM)
 
@@ -57,7 +57,7 @@ agegr9_lookup <- exprs(
   AGE > 50,             ">50",     3
 )
 
-adsl <- adsl %>%
+adsl_2 <- adsl_1 %>%
   derive_vars_cat(definition = agegr9_lookup)
 
 # -----------------------------------------------------------------------------
@@ -88,7 +88,7 @@ ex_ext <- ex %>%
     ignore_seconds_flag = TRUE
   )
 
-adsl <- adsl %>%
+adsl_3 <- adsl_2 %>%
   # First valid-dose exposure, sorted in date/time order -> TRTSDTM.
   # Valid dose: EXDOSE > 0, or EXDOSE == 0 for a placebo treatment.
   derive_vars_merged(
@@ -118,7 +118,7 @@ adsl <- adsl %>%
 #    rather than a missing value, so they are flagged "Y" under this rule as
 #    specified. A stricter ITT definition would also exclude them.
 # -----------------------------------------------------------------------------
-adsl <- adsl %>%
+adsl_4 <- adsl_3 %>%
   mutate(ITTFL = if_else(!is.na(ARM), "Y", "N"))
 
 # -----------------------------------------------------------------------------
@@ -128,7 +128,7 @@ adsl <- adsl %>%
 #    positions are included. To restrict to supine readings only, add
 #    `& VSPOS == "SUPINE"` to the condition.
 # -----------------------------------------------------------------------------
-adsl <- adsl %>%
+adsl_5 <- adsl_4 %>%
   derive_var_merged_exist_flag(
     dataset_add = vs,
     by_vars = exprs(STUDYID, USUBJID),
@@ -156,7 +156,7 @@ vs_dt <- vs %>% mutate(VSDT = convert_dtc_to_dt(VSDTC))
 ae_dt <- ae %>% mutate(AESTDT = convert_dtc_to_dt(AESTDTC))
 ds_dt <- ds %>% mutate(DSSTDT = convert_dtc_to_dt(DSSTDTC))
 
-adsl <- adsl %>%
+adsl_6 <- adsl_5 %>%
   derive_vars_extreme_event(
     by_vars = exprs(STUDYID, USUBJID),
     events = list(
@@ -183,12 +183,12 @@ adsl <- adsl %>%
       ),
       # (4) Last valid-dose treatment date
       event(
-        dataset_name = "adsl",
+        dataset_name = "adsl_5",
         condition = !is.na(TRTEDT),
         set_values_to = exprs(LSTALVDT = TRTEDT, seq = 0)
       )
     ),
-    source_datasets = list(vs = vs_dt, ae = ae_dt, ds = ds_dt, adsl = adsl),
+    source_datasets = list(vs = vs_dt, ae = ae_dt, ds = ds_dt, adsl_5 = adsl_5),
     tmp_event_nr_var = event_nr,
     order = exprs(LSTALVDT, seq, event_nr),
     mode = "last",
@@ -199,7 +199,7 @@ adsl <- adsl %>%
 # 8. CARPOPFL: "Y" if the subject has any AE whose (upper-cased) system organ
 #    class is "CARDIAC DISORDERS"; otherwise missing (NA).
 # -----------------------------------------------------------------------------
-adsl <- adsl %>%
+adsl_final <- adsl_6 %>%
   derive_var_merged_exist_flag(
     dataset_add = ae,
     by_vars = exprs(STUDYID, USUBJID),
@@ -217,7 +217,7 @@ derived_vars <- c(
   "ITTFL", "ABNSBPFL", "LSTALVDT", "CARPOPFL"
 )
 
-adsl <- adsl %>%
+adsl <- adsl_final %>%
   select(-all_of(derived_vars), all_of(derived_vars)) %>%
   arrange(STUDYID, USUBJID)
 

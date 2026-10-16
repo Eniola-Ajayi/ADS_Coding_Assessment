@@ -3,7 +3,7 @@ Type: Package
 Title: Descriptive Statistics for Numeric Vectors and Data Frames
 Version: 0.2.0
 Authors@R:
-    person("Eniola", "Ajayi", email = "eniolaajayi.py@gmail.com",
+    person("Eniola", "Ajayi", email = "eniolaajayi.js@gmail.com",
            role = c("aut", "cre"))
 Description: Implements common descriptive statistics from first principles:
     arithmetic mean, median, mode, first and third quartiles and the

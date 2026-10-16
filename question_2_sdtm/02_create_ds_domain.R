@@ -43,7 +43,7 @@ dm <- pharmaversesdtm::dm
 # -----------------------------------------------------------------------------
 # 2. Create oak_id_vars
 #    Adds oak_id, raw_source and patient_number: the keys sdtm.oak uses to
-#    join every mapped variable back to the right raw record.
+#    join every mapped variable back to the corresponding raw record.
 # -----------------------------------------------------------------------------
 ds_raw <- ds_raw %>%
   generate_oak_id_vars(
@@ -63,6 +63,35 @@ study_ct <- read.csv(
   na.strings = ""
 )
 
+study_ct1  <- 
+  data.frame( 
+    stringsAsFactors  =  FALSE, 
+    codelist_code  =  c("C66727","C66727", 
+                        "C66727","C66727","C66727","C66727","C66727","C66727", 
+                        "C66727","C66727"), 
+    term_code  =  c("C41331","C25250", 
+                    "C28554","C48226","C48227","C48250","C142185","C49628", 
+                    "C49632","C49634"), 
+    term_value  =  c("ADVERSE  EVENT", 
+                     "COMPLETED","DEATH","LACK  OF  EFFICACY","LOST  TO 
+FOLLOW-UP", 
+                     "PHYSICIAN  DECISION","PROTOCOL  VIOLATION", 
+                     "SCREEN  FAILURE","STUDY  TERMINATED  BY  SPONSOR", 
+                     "WITHDRAWAL  BY  SUBJECT"), 
+    collected_value  =  c("Adverse  Event", 
+                          "Complete","Dead","Lack  of  Efficacy","Lost  To 
+Follow-Up", 
+                          "Physician  Decision","Protocol  Violation", 
+                          "Trial  Screen  Failure","Study  Terminated  By  Sponsor", 
+                          "Withdrawal  by  Subject"), 
+    term_preferred_term  =  c("AE","Completed","Died", 
+                              NA,NA,NA,"Violation", 
+                              "Failure  to  Meet  Inclusion/Exclusion 
+Criteria",NA,"Dropout"), 
+    term_synonyms  =  c("ADVERSE  EVENT", 
+                        "COMPLETE","Death",NA,NA,NA,NA,NA,NA, 
+                        "Discontinued  Participation") 
+  )
 # -----------------------------------------------------------------------------
 # 4. Map the topic variable: DSTERM
 #    Disposition events and protocol milestones: the collected reason

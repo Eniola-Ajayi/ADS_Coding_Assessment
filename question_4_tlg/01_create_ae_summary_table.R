@@ -25,6 +25,8 @@ adae <- pharmaverseadam::adae %>%
     TRTEMFL == "Y"   # treatment-emergent AEs only
   )
 
+
+
 # -----------------------------------------------------------------------------
 # 2. Hierarchical summary: SOC -> reported term
 #    tbl_hierarchical() counts each SUBJECT once per row (id = USUBJID), so
