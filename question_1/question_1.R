@@ -55,5 +55,7 @@ describe_stats(adsl, vars = "AGE", by = "TRT01A")
 describe_stats(adsl, vars = "AGE", by = c("TRT01A", "SEX"), type = 2)  # SAS quartiles
 describe_stats(pharmaverseadam::adsl, vars = "AGE", by = "TRT01P")
 
-table<-describe_stats(pharmaverseadam::adsl, vars = "AGE", by = "TRT01P")
+table1<-describe_stats(pharmaverseadam::adsl, vars = "AGE", by = "TRT01P")
+
+table2<-describe_stats(df, vars = "age", by = "trt")
 
