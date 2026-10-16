@@ -100,7 +100,7 @@ Criteria",NA,"Dropout"),
 #    When a target variable is mapped again, sdtm.oak only fills records that
 #    are still missing, so the second call fills just the OTHERSP records.
 # -----------------------------------------------------------------------------
-ds <-
+ds_1 <-
   assign_no_ct(
     raw_dat = ds_raw,
     raw_var = "IT.DSTERM",
@@ -117,7 +117,7 @@ ds <-
 # -----------------------------------------------------------------------------
 # 5. Map the qualifier, identifier and timing variables
 # -----------------------------------------------------------------------------
-ds <- ds %>%
+ds_2 <- ds_1 %>%
   # --- DSDECOD -------------------------------------------------------------
   # (a) Randomisation is a protocol milestone, not a reason for
   #     non-completion, so it is not in C66727: hardcode its decode.
@@ -222,7 +222,7 @@ visitnum_lookup <- study_ct %>%
   transmute(VISIT = toupper(collected_value), VISITNUM = as.numeric(term_value)) %>%
   distinct(VISIT, .keep_all = TRUE)
 
-ds <- ds %>%
+ds_3 <- ds_2 %>%
   left_join(visitnum_lookup, by = "VISIT") %>%
   mutate(
     VISITNUM = coalesce(
@@ -234,7 +234,7 @@ ds <- ds %>%
 # -----------------------------------------------------------------------------
 # 7. SDTM derived variables
 # -----------------------------------------------------------------------------
-ds <- ds %>%
+ds <- ds_3 %>%
   mutate(
     DOMAIN  = "DS",
     USUBJID = paste0("01-", patient_number),
