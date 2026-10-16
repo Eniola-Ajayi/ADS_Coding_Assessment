@@ -88,6 +88,7 @@ ex_ext <- ex %>%
     ignore_seconds_flag = TRUE
   )
 
+
 adsl_3 <- adsl_2 %>%
   # First valid-dose exposure, sorted in date/time order -> TRTSDTM.
   # Valid dose: EXDOSE > 0, or EXDOSE == 0 for a placebo treatment.
