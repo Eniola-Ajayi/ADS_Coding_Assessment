@@ -201,7 +201,7 @@ class MockLLM:
 
     # Columns checked in order; earlier columns win when several match.
     PRIORITY = ["AESEV", "AETERM", "AEDECOD", "AESOC", "AEOUT", "ACTARM"]
-    STOPWORDS = {"AND", "OF", "THE", "DISORDERS", "CONDITIONS", "GENERAL", "SITE", "TISSUE"}
+    STOPWORDS = {"AND", "OF", "THE", "DISORDERS", "CONDITIONS", "GENERAL", "SITE", "TISSUE","SYSTEM"}
 
     def __init__(self, schema: dict[str, dict[str, Any]], df: pd.DataFrame):
         # The mock may see every distinct value (not just the examples).
