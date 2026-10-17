@@ -6,4 +6,4 @@ anything here; each extension only builds on them.
 
 | Folder | What it adds |
 |---|---|
-| [`investigator_app/`](investigator_app/README.md) | AE Safety Explorer: a Streamlit web app for investigators, built on the Question 5 API |
+| [`investigator_app/`](investigator_app/README.md) | AE Safety Explorer: a Streamlit web app for investigators, built on the Question 5 API and the Question 6 agent, with plain-English questions that can combine several conditions |

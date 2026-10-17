@@ -8,6 +8,10 @@ Uses a small, hand-made dataset so every expected value can be checked by eye:
     S-2  Drug A   SEVERE x 3               5 + 5 + 5 = 15  High
     S-3  Placebo  MILD                                 1   Low
     S-4  Drug A   (severity missing)                   0   Low
+
+The /ask tests use the offline stand-in for the language model, so their
+answers are fixed. test_multi_agent.py tests how a language model's reply is
+checked.
 """
 
 import pandas as pd
@@ -40,6 +44,7 @@ def client(tmp_path, monkeypatch):
     csv = tmp_path / "adae.csv"
     SAMPLE.to_csv(csv, index=False)
     monkeypatch.setenv("ADAE_PATH", str(csv))
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)  # /ask uses the offline MockLLM
     with TestClient(api.app) as c:  # runs the Question 5 start-up (loads data)
         yield c
 
@@ -101,9 +106,97 @@ def test_subject_events_404(client):
     assert client.get("/subjects/NOT-A-SUBJECT/events").status_code == 404
 
 
+# --- POST /ask (question answering, built on the Question 6 agent) ----------
+def ask(client, question):
+    return client.post("/ask", json={"question": question}).json()
+
+
+def conditions(body):
+    """The filters in a /ask reply, as (column, values) pairs."""
+    return [(f["column"], f["values"]) for f in body["filters"]]
+
+
+def test_ask_maps_the_question_and_returns_subjects(client):
+    body = ask(client, "Which subjects had a headache?")
+    assert body["filters"] == [{"column": "AETERM", "values": ["HEADACHE"], "match": "contains"}]
+    assert body["subjects"] == ["S-1"]
+    assert body["n_records"] == 1
+    assert body["backend"] == "MultiMockLLM"
+
+
+@pytest.mark.parametrize(
+    "question, expected_filters, query",
+    [
+        # one condition
+        ("Show me severe adverse events",
+         [("AESEV", ["SEVERE"])],
+         {"severity": ["SEVERE"]}),
+        # two conditions on different variables: AND
+        ("Which placebo patients had severe events?",
+         [("AESEV", ["SEVERE"]), ("ACTARM", ["Placebo"])],
+         {"severity": ["SEVERE"], "treatment_arm": "Placebo"}),
+        # two values of one variable: OR
+        ("mild or moderate events",
+         [("AESEV", ["MILD", "MODERATE"])],
+         {"severity": ["MILD", "MODERATE"]}),
+        # both together
+        ("Moderate or severe events on placebo",
+         [("AESEV", ["MODERATE", "SEVERE"]), ("ACTARM", ["Placebo"])],
+         {"severity": ["MODERATE", "SEVERE"], "treatment_arm": "Placebo"}),
+    ],
+)
+def test_ask_agrees_with_ae_query(client, question, expected_filters, query):
+    """Questions the Question 5 filters can also express give the same answer."""
+    asked = ask(client, question)
+    queried = client.post("/ae-query", json=query).json()
+    assert conditions(asked) == expected_filters
+    assert asked["subjects"] == queried["subjects"]
+    assert asked["n_records"] == queried["count"]
+
+
+def test_ask_three_conditions(client):
+    """Severity, body system and arm must all hold for the same AE record."""
+    body = ask(client, "Severe nervous system events on placebo")
+    assert conditions(body) == [
+        ("AESEV", ["SEVERE"]),
+        ("AESOC", ["NERVOUS SYSTEM DISORDERS"]),
+        ("ACTARM", ["Placebo"]),
+    ]
+    assert body["subjects"] == ["S-1"]  # S-1's severe syncope
+    assert body["n_records"] == 1
+
+
+def test_ask_conditions_apply_to_the_same_record(client):
+    """S-1 had a headache and a severe event, but the headache was mild."""
+    body = ask(client, "Severe headaches")
+    assert conditions(body) == [("AESEV", ["SEVERE"]), ("AETERM", ["HEADACHE"])]
+    assert body["n_subjects"] == 0
+    assert body["subjects"] == []
+
+
+def test_ask_matches_the_question_6_agent_on_one_condition(client):
+    """For a one-condition question, the answer is the same as Question 6's."""
+    from clinical_agent import ClinicalTrialDataAgent
+
+    q6 = ClinicalTrialDataAgent(SAMPLE)  # offline MockLLM
+    for question in ["Which subjects had a headache?", "Show me severe adverse events",
+                     "Anyone with skin problems?", "Which patients were on placebo?"]:
+        assert ask(client, question)["subjects"] == q6.ask(question)["subjects"], question
+
+
+def test_ask_unanswerable_question_gives_422_with_explanation(client):
+    r = client.post("/ask", json={"question": "What is the weather like?"})
+    assert r.status_code == 422
+    assert "could not be mapped" in r.json()["detail"]
+
+
+def test_ask_rejects_an_empty_question(client):
+    assert client.post("/ask", json={"question": ""}).status_code == 422
+
+
 # --- /docs lists both the original and the new endpoints --------------------
 def test_openapi_lists_all_endpoints(client):
     paths = client.get("/openapi.json").json()["paths"]
     for path in ["/", "/ae-query", "/subject-risk/{subject_id}",
-                 "/options", "/risk-summary", "/subjects/{subject_id}/events"]:
+                 "/options", "/risk-summary", "/subjects/{subject_id}/events", "/ask"]:
         assert path in paths

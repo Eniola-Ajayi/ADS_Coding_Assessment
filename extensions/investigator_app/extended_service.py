@@ -1,9 +1,13 @@
-"""Extra business logic for the investigator app (extension to Question 5).
+"""Extra business logic for the investigator app (extends Questions 5 and 6).
 
-The Question 5 code in ``question_5_api`` is reused unchanged: the scoring
-rules (``SEVERITY_WEIGHTS``, ``categorise_risk``) are imported from
-``ae_service`` rather than copied, so the API and the app can never disagree
-about how a subject is scored.
+The Question 5 and 6 code is reused unchanged:
+
+* the scoring rules (``SEVERITY_WEIGHTS``, ``categorise_risk``) are imported
+  from ``question_5_api/ae_service.py`` rather than copied, so the API and
+  the app can never disagree about how a subject is scored;
+* plain-English questions are answered by ``multi_agent.py``, which builds
+  on the Question 6 agent (``question_6_genai/clinical_agent.py``) so that
+  one question can combine several conditions.
 
 Like ``ae_service``, these are plain pandas functions with no web framework
 dependency, so they can be tested on their own.
@@ -16,12 +20,15 @@ from pathlib import Path
 
 import pandas as pd
 
-# Make the Question 5 modules (ae_service, main) importable from this folder.
-Q5_DIR = Path(__file__).resolve().parents[2] / "question_5_api"
-if str(Q5_DIR) not in sys.path:
-    sys.path.insert(0, str(Q5_DIR))
+# Make the Question 5 (ae_service, main) and Question 6 (clinical_agent)
+# modules importable from this folder.
+REPO_ROOT = Path(__file__).resolve().parents[2]
+for folder in (REPO_ROOT / "question_5_api", REPO_ROOT / "question_6_genai"):
+    if str(folder) not in sys.path:
+        sys.path.insert(0, str(folder))
 
 import ae_service  # noqa: E402  (needs the path set up above)
+from multi_agent import MultiFilterAgent  # noqa: E402
 
 # AE variables shown in a subject's profile, in display order.
 EVENT_COLUMNS = [
@@ -108,3 +115,36 @@ def subject_events(df: pd.DataFrame, subject_id: str) -> dict | None:
         "n_events": int(len(records)),
         "events": _records(events),
     }
+
+
+# ---------------------------------------------------------------------------
+# Plain-English questions (multi-condition agent, built on Question 6)
+# ---------------------------------------------------------------------------
+_AGENT: dict = {}
+
+
+def get_agent(df: pd.DataFrame) -> MultiFilterAgent:
+    """The question-answering agent for this data, created once and then reused.
+
+    Building the agent reads the data's schema and chooses the language model
+    (OpenAI if OPENAI_API_KEY is set when it is first needed, otherwise the
+    offline mock), so it is done once rather than for every question.
+    """
+    agent = _AGENT.get("agent")
+    if agent is None or agent.df is not df:  # new data (e.g. in tests): new agent
+        agent = MultiFilterAgent(df)
+        _AGENT["agent"] = agent
+    return agent
+
+
+def ask_question(df: pd.DataFrame, question: str) -> dict:
+    """Answer one question, which may combine several conditions.
+
+    Returns the filters the question was turned into (AND between filters,
+    OR between the values of one filter), the number of matching AE records,
+    the subjects, and the language model used. Raises ValueError if the
+    question cannot be turned into filters.
+    """
+    agent = get_agent(df)
+    result = agent.ask(question.strip())
+    return {**result, "backend": agent.backend}

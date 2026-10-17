@@ -61,6 +61,24 @@ set OPENAI_API_KEY=sk-...            # Windows (macOS/Linux: export OPENAI_API_K
 python test_agent.py                 # uses OpenAI via LangChain
 ```
 
+### Chat mode: ask your own questions
+
+```bash
+python test_agent.py --chat
+```
+
+```
+Your question: Which patients reported a rash?
+   -> filter AETERM ~ 'RASH'
+   -> ... subjects (... AE records)
+
+Your question: quit
+```
+
+Type `quit`, or press Enter on a blank line, to stop. Questions that cannot be
+turned into a filter get an explanation instead of a wrong answer, and the
+session carries on.
+
 Example output:
 
 ```

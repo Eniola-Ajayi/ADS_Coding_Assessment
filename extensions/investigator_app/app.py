@@ -1,12 +1,13 @@
 """AE Safety Explorer: a Streamlit front end for the Clinical Trial Data API.
 
-Lets an investigator or medical monitor find cohorts, see which subjects carry
-the most safety risk and open a subject's adverse event history, without
-writing any code.
+Lets an investigator or medical monitor ask questions in plain English, find
+cohorts, see which subjects carry the most safety risk and open a subject's
+adverse event history, without writing any code.
 
-The app never reads the data or applies the scoring rules itself. Every number
-on screen comes from the API, so the rules stay defined in one place
-(question_5_api/ae_service.py).
+The app never reads the data or applies the rules itself. Every number on
+screen comes from the API, so the rules stay defined in one place: the risk
+score in question_5_api/ae_service.py, the question answering in
+multi_agent.py (built on question_6_genai/clinical_agent.py).
 
 Run from this folder, in two terminals:
 
@@ -26,6 +27,7 @@ import streamlit as st
 
 API_URL = os.environ.get("AE_API_URL", "http://127.0.0.1:8000").rstrip("/")
 TIMEOUT_SECONDS = 10
+ASK_TIMEOUT_SECONDS = 60  # a language model can take a few seconds to answer
 CACHE_SECONDS = 300  # results are reused for 5 minutes, or until "Reload data"
 
 ALL_ARMS = "All treatment arms"
@@ -51,6 +53,14 @@ EVENT_LABELS = {
     "AEENDTC": "End date",
     "TRTEMFL": "Treatment-emergent",
 }
+# How the variables the question was turned into are described to the user
+SEARCH_LABELS = {**EVENT_LABELS, "ACTARM": "Treatment arm"}
+
+EXAMPLE_QUESTIONS = [
+    "Which patients reported a headache?",
+    "Moderate or severe skin problems on placebo",
+    "Serious cardiac events in the high dose arm",
+]
 
 
 # ---------------------------------------------------------------------------
@@ -98,6 +108,38 @@ def find_cohort(severities: tuple[str, ...], treatment_arm: str | None) -> dict:
     """The Question 5 cohort query (POST /ae-query)."""
     body = {"severity": list(severities) or None, "treatment_arm": treatment_arm}
     return call_api("POST", "/ae-query", json=body)
+
+
+def error_detail(response: requests.Response) -> str:
+    """The API's explanation of an error, as one readable sentence."""
+    try:
+        detail = response.json().get("detail")
+    except ValueError:
+        return response.text
+    if isinstance(detail, list):  # validation errors are a list of problems
+        return "; ".join(str(d.get("msg", d)) for d in detail)
+    return str(detail)
+
+
+@st.cache_data(ttl=CACHE_SECONDS, show_spinner="Thinking about your question...")
+def ask(question: str) -> dict:
+    """POST /ask: the question-answering agent, behind the API.
+
+    Returns the agent's answer, or {"error": "..."} with the API's explanation
+    when the question can't be answered.
+    """
+    try:
+        response = requests.post(
+            f"{API_URL}/ask", json={"question": question}, timeout=ASK_TIMEOUT_SECONDS
+        )
+    except requests.exceptions.RequestException as err:
+        raise ApiUnavailable(str(err)) from err
+    if response.status_code == 404:
+        return {"error": "This API has no /ask endpoint. Start the extended API (uvicorn api:app)."}
+    if response.status_code in (422, 502):
+        return {"error": error_detail(response)}
+    response.raise_for_status()
+    return response.json()
 
 
 @st.cache_data(ttl=CACHE_SECONDS, show_spinner=False)
@@ -195,6 +237,18 @@ def risk_by_arm_chart(summary: pd.DataFrame) -> alt.LayerChart:
     )
 
 
+def describe_filters(filters: list[dict]) -> str:
+    """How a question was understood, e.g.
+    'Severity (AESEV) is "SEVERE" and Treatment arm (ACTARM) is "Placebo"'."""
+    parts = []
+    for f in filters:
+        label = SEARCH_LABELS.get(f["column"], f["column"])
+        verb = "is" if f["match"] == "exact" else "contains"
+        values = " or ".join(f'"{value}"' for value in f["values"])
+        parts.append(f"**{label}** ({f['column']}) {verb} {values}")
+    return " and ".join(parts)
+
+
 def severity_breakdown(events: list[dict], severities: list[str]) -> str:
     """e.g. '3 mild, 1 severe' for a subject's events."""
     counts = pd.Series([e.get("AESEV") for e in events], dtype=object).value_counts()
@@ -208,6 +262,56 @@ def severity_breakdown(events: list[dict], severities: list[str]) -> str:
 # ---------------------------------------------------------------------------
 # Pages
 # ---------------------------------------------------------------------------
+def ask_a_question(summary: pd.DataFrame) -> None:
+    st.markdown(
+        "Ask about the adverse events in plain English. A question can combine "
+        "conditions, such as a severity, a type of event and a treatment arm. It is "
+        "turned into a search on the AE variables, shown below so you can check how "
+        "it was understood, and the matching subjects are listed."
+    )
+    with st.form("ask_form"):
+        question = st.text_input("Your question", placeholder=EXAMPLE_QUESTIONS[0])
+        submitted = st.form_submit_button("Ask")
+    st.caption("For example: " + " / ".join(f"\"{q}\"" for q in EXAMPLE_QUESTIONS))
+
+    if submitted and question.strip():
+        # Kept between reruns, so the answer stays when you use the other tabs
+        st.session_state["last_answer"] = ask(question.strip())
+    answer = st.session_state.get("last_answer")
+    if not answer:
+        return
+    if "error" in answer:
+        st.warning(answer["error"])
+        return
+
+    st.success(f"Searched for adverse events where {describe_filters(answer['filters'])}")
+    first, second = st.columns(2)
+    first.metric("Subjects", answer["n_subjects"])
+    second.metric("Matching adverse events", answer["n_records"])
+
+    if answer["n_subjects"] == 0:
+        st.info("No subjects match. Try different wording, or check the search above.")
+    else:
+        members = summary[summary["subject_id"].isin(answer["subjects"])]
+        st.dataframe(
+            subject_table(members),
+            hide_index=True,
+            column_config=subject_columns(summary["risk_score"].max()),
+        )
+        st.download_button(
+            "Download these subjects (CSV)",
+            data=members.to_csv(index=False),
+            file_name="ae_question_subjects.csv",
+            mime="text/csv",
+        )
+
+    model = (
+        "OpenAI (via LangChain)" if answer["backend"] == "ChatOpenAI"
+        else "the offline stand-in model (start the API with OPENAI_API_KEY set to use OpenAI)"
+    )
+    st.caption(f"Question: \"{answer['question']}\". Answered by {model}.")
+
+
 def cohort_finder(options: dict, summary: pd.DataFrame) -> None:
     st.markdown(
         "Find the subjects who had adverse events of a given severity, in a given "
@@ -363,9 +467,11 @@ def main() -> None:
             st.info("The API returned no adverse event data.")
             return
 
-        cohort_tab, risk_tab, subject_tab = st.tabs(
-            ["Cohort finder", "Risk overview", "Subject profile"]
+        ask_tab, cohort_tab, risk_tab, subject_tab = st.tabs(
+            ["Ask a question", "Cohort finder", "Risk overview", "Subject profile"]
         )
+        with ask_tab:
+            ask_a_question(summary)
         with cohort_tab:
             cohort_finder(options, summary)
         with risk_tab:
