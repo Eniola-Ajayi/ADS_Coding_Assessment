@@ -1,0 +1,96 @@
+# Runs every check in the repository on GitHub's servers each time code is
+# pushed: the Question 1 package check, the Question 2-4 R scripts, and the
+# Python tests for Questions 5 and 6 and the investigator app.
+# Results: the "Actions" tab of the repository on GitHub.
+
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch: # adds a "Run workflow" button on the Actions tab
+
+jobs:
+  r:
+    name: R (Questions 1-4)
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true # pre-built packages, much faster installs
+
+      # The package's own dependencies (from DESCRIPTION) plus the packages
+      # the Question 2-4 scripts use
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          working-directory: question_1/descriptive_stats
+          extra-packages: |
+            any::rcmdcheck
+            any::pharmaverseadam
+            any::pharmaversesdtm
+            any::pharmaverseraw
+            any::sdtm.oak
+            any::admiral
+            any::dplyr
+            any::stringr
+            any::gtsummary
+            any::gt
+            any::ggplot2
+            any::scales
+          needs: check
+
+      - name: "Q1: R CMD check (also runs the unit tests)"
+        uses: r-lib/actions/check-r-package@v2
+        with:
+          working-directory: question_1/descriptive_stats
+
+      # Each script stops with an error if one of its checks fails
+      - name: "Q2-Q4: run the scripts"
+        shell: bash
+        run: |
+          for script in \
+            question_2_sdtm/02_create_ds_domain.R \
+            question_3_adam/create_adsl.R \
+            question_4_tlg/01_create_ae_summary_table.R \
+            question_4_tlg/02_create_visualizations.R \
+            question_4_tlg/03_create_listings.R \
+            data/export_adae.R
+          do
+            echo "::group::$script"
+            Rscript "$script"
+            echo "::endgroup::"
+          done
+
+  python:
+    name: Python (Questions 5-6, investigator app)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: pip
+          cache-dependency-path: |
+            question_5_api/requirements.txt
+            question_6_genai/requirements.txt
+
+      - name: Install packages
+        run: python -m pip install -r question_5_api/requirements.txt -r question_6_genai/requirements.txt
+
+      - name: "Q5: API tests"
+        working-directory: question_5_api
+        run: python -m pytest -v
+
+      # No OPENAI_API_KEY here, so the agent uses the offline MockLLM
+      - name: "Q6: example questions"
+        working-directory: question_6_genai
+        run: python test_agent.py
+
+      - name: "Investigator app: API tests"
+        working-directory: extensions/investigator_app
+        run: python -m pytest -v
