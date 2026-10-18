@@ -13,7 +13,7 @@
 #   TRTEDTM / TRTETMF  Treatment end datetime (last valid-dose exposure),
 #                      needed for LSTALVDT
 #   TRTSDT / TRTEDT    Date parts of the above
-#   ITTFL              "Y" if DM.ARM is populated, else "N"
+#   ITTFL              "Y" if randomised (DM.ARM populated, not "Screen Failure")
 #   ABNSBPFL           "Y" if any systolic BP (mmHg) >= 140 or < 100, else "N"
 #   LSTALVDT           Last known alive date (VS, AE, DS, exposure)
 #   CARPOPFL           "Y" if any AE with SOC "CARDIAC DISORDERS", else NA
@@ -114,19 +114,21 @@ adsl_3 <- adsl_2 %>%
   derive_vars_dtm_to_dt(source_vars = exprs(TRTSDTM, TRTEDTM))
 
 # -----------------------------------------------------------------------------
-# 5. ITTFL: "Y" if the subject was randomised (DM.ARM populated), else "N"
-#    Note: in pharmaversesdtm, screen failures carry ARM = "Screen Failure"
-#    rather than a missing value, so they are flagged "Y" under this rule as
-#    specified. A stricter ITT definition would also exclude them.
+# 5. ITTFL: "Y" if the subject was randomised, else "N"
+#    The spec contradicts itself: the detailed rule (DM.ARM not missing) flags
+#    all 306 subjects, because screen failures carry ARM = "Screen Failure"
+#    rather than a missing value. This follows the intent ("randomized")
+#    instead, giving 254: the same as the CDISC Pilot ITT population.
 # -----------------------------------------------------------------------------
 adsl_4 <- adsl_3 %>%
-  mutate(ITTFL = if_else(!is.na(ARM), "Y", "N"))
+  mutate(ITTFL = if_else(!is.na(ARM) & ARM != "Screen Failure", "Y", "N"))
 
 # -----------------------------------------------------------------------------
 # 6. ABNSBPFL: "Y" if any systolic BP observation in mmHg is >= 140 or < 100,
 #    "N" otherwise (including subjects with no vital signs).
-#    The detailed specification does not restrict by position, so all
-#    positions are included. To restrict to supine readings only, add
+#    The headline says "supine" but the detailed spec does not restrict by
+#    position, so all positions are included. In normal work this would be
+#    clarified with the spec author; if supine only is confirmed, add
 #    `& VSPOS == "SUPINE"` to the condition.
 # -----------------------------------------------------------------------------
 adsl_5 <- adsl_4 %>%
@@ -249,6 +251,9 @@ print(count(adsl, TRTSTMF))
 #      It cannot be compared with pharmaverseadam::adsl, because the template
 #      uses different sources (AE start/end, LB, exposure) from this spec
 #      (VS, AE start, DS, exposure).
+#  (c) AGEGR9/AGEGR9N, ABNSBPFL and CARPOPFL are specific to this spec (not in
+#      pharmaverseadam::adsl) and ITTFL follows this spec's rule, so they are
+#      also re-derived independently with plain dplyr.
 # -----------------------------------------------------------------------------
 reference <- pharmaverseadam::adsl
 
@@ -274,15 +279,35 @@ lstalvdt_check <- bind_rows(
   group_by(USUBJID) %>%
   summarise(LSTALVDT.ref = max(dt), .groups = "drop")
 
+# (c) Subjects with an abnormal systolic BP, and with a cardiac AE
+abnsbp_subjects <- vs %>%
+  filter(VSTESTCD == "SYSBP", VSSTRESU == "mmHg", VSSTRESN >= 140 | VSSTRESN < 100) %>%
+  pull(USUBJID)
+cardiac_subjects <- ae %>%
+  filter(toupper(AESOC) == "CARDIAC DISORDERS") %>%
+  pull(USUBJID)
+
+flags_check <- dm %>%
+  transmute(
+    USUBJID,
+    AGEGR9.ref   = case_when(AGE < 18 ~ "<18", AGE <= 50 ~ "18 - 50", AGE > 50 ~ ">50"),
+    AGEGR9N.ref  = case_when(AGE < 18 ~ 1, AGE <= 50 ~ 2, AGE > 50 ~ 3),
+    ITTFL.ref    = if_else(is.na(ARM) | ARM == "Screen Failure", "N", "Y"),
+    ABNSBPFL.ref = if_else(USUBJID %in% abnsbp_subjects, "Y", "N"),
+    CARPOPFL.ref = if_else(USUBJID %in% cardiac_subjects, "Y", NA_character_)
+  )
+flag_vars <- c("AGEGR9", "AGEGR9N", "ITTFL", "ABNSBPFL", "CARPOPFL")
+
 qc <- adsl %>%
-  select(STUDYID, USUBJID, all_of(c(trt_vars, "LSTALVDT"))) %>%
+  select(STUDYID, USUBJID, all_of(c(trt_vars, "LSTALVDT", flag_vars))) %>%
   inner_join(
     reference[c("STUDYID", "USUBJID", trt_vars)],
     by = c("STUDYID", "USUBJID"), suffix = c("", ".ref")
   ) %>%
-  left_join(lstalvdt_check, by = "USUBJID")
+  left_join(lstalvdt_check, by = "USUBJID") %>%
+  left_join(flags_check, by = "USUBJID")
 
-qc_vars <- c(trt_vars, "LSTALVDT")
+qc_vars <- c(trt_vars, "LSTALVDT", flag_vars)
 
 # Dates and datetimes are compared as numbers, everything else as text
 as_comparable <- function(x) {
@@ -297,7 +322,10 @@ n_matching <- function(v) {
 message("Subjects matched to pharmaverseadam::adsl: ", nrow(qc), " of ", nrow(adsl))
 print(tibble(
   variable = qc_vars,
-  compared_with = c(rep("pharmaverseadam::adsl", length(trt_vars)), "independent re-derivation"),
+  compared_with = c(
+    rep("pharmaverseadam::adsl", length(trt_vars)),
+    rep("independent re-derivation", 1 + length(flag_vars))
+  ),
   records_compared = nrow(qc),
   matching = vapply(qc_vars, n_matching, numeric(1))
 ))
@@ -308,4 +336,10 @@ print(tibble(
 out_dir <- file.path("question_3_adam", "output")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 saveRDS(adsl, file.path(out_dir, "adsl.rds"))
-write.csv(adsl, file.path(out_dir, "adsl.csv"), row.names = FALSE, na = "")
+
+# R leaves out a midnight time (00:00:00) when printing or writing a datetime,
+# so the imputed time in TRTSDTM would look missing in the CSV. Write the
+# datetimes as ISO 8601 text instead (the .rds keeps them as datetimes).
+adsl_csv <- adsl %>%
+  mutate(across(c(TRTSDTM, TRTEDTM), ~ format(.x, "%Y-%m-%dT%H:%M:%S", tz = "UTC")))
+write.csv(adsl_csv, file.path(out_dir, "adsl.csv"), row.names = FALSE, na = "")
