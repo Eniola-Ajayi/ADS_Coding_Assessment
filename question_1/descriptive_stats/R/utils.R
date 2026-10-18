@@ -7,13 +7,14 @@
 #' values according to `na.rm`, and flags empty input.
 #'
 #' @param x Object passed by the user.
-#' @param na.rm Logical; remove missing values (`NA`/`NaN`) before computing?
+#' @param na.rm Logical; remove missing values (`NA`/`NaN`) before computing
 #' @param arg Name of the argument, used in error messages.
 #'
 #' @return A list with elements `x` (a double vector, missing values removed
 #'   when `na.rm = TRUE`), `has_na` (logical) and `is_empty` (logical).
 #' @noRd
 check_numeric_input <- function(x, na.rm = FALSE, arg = "x") {
+# if the na.rm equals anything that is not a boolean, not one value or is set to missing then stop with an error.
   if (!is.logical(na.rm) || length(na.rm) != 1L || is.na(na.rm)) {
     stop("`na.rm` must be a single TRUE or FALSE value.", call. = FALSE)
   }
@@ -66,59 +67,4 @@ empty_result <- function(fun) {
     call. = FALSE
   )
   NA_real_
-}
-
-#' Sample quantile following Hyndman & Fan (1996)
-#'
-#' Implemented from first principles. Supports type 2 (SAS PCTLDEF=5),
-#' type 6 (SPSS/Minitab) and type 7 (R and Excel default).
-#'
-#' @param x Sorted double vector with no missing values, length >= 1.
-#' @param p Probability in \[0, 1\].
-#' @param type One of 2, 6 or 7.
-#' @return A single double.
-#' @noRd
-quantile_hf <- function(x, p, type = 7) {
-  n <- length(x)
-  if (n == 1L) return(x[1L])
-
-  if (type == 2) {
-    # Inverse of the empirical CDF, averaging at discontinuities
-    np <- n * p
-    j <- floor(np + 4 * .Machine$double.eps) # small fuzz for floating point
-    g <- np - j
-    lo <- x[max(j, 1L)]
-    hi <- x[min(j + 1L, n)]
-    if (abs(g) < 4 * .Machine$double.eps) {
-      return(if (j == 0) x[1L] else (lo + hi) / 2)
-    }
-    return(hi)
-  }
-
-  # Types 6 and 7 are both "position = n * p + m" with linear interpolation
-  m <- switch(as.character(type),
-    "6" = p,
-    "7" = 1 - p
-  )
-  h <- n * p + m                       # (fractional) position in sorted data
-  j <- floor(h + 4 * .Machine$double.eps)
-  g <- h - j                           # how far between x[j] and x[j + 1]
-
-  if (j < 1L) return(x[1L])            # positions before the first value
-  if (j >= n) return(x[n])             # positions beyond the last value
-  if (abs(g) < 4 * .Machine$double.eps) return(x[j])
-
-  (1 - g) * x[j] + g * x[j + 1L]
-}
-
-#' Validate the quantile `type` argument
-#' @noRd
-check_type <- function(type) {
-  if (!is.numeric(type) || length(type) != 1L || !(type %in% c(2, 6, 7))) {
-    stop(
-      "`type` must be one of 2 (SAS default), 6 (SPSS/Minitab) or 7 (R default).",
-      call. = FALSE
-    )
-  }
-  invisible(type)
 }

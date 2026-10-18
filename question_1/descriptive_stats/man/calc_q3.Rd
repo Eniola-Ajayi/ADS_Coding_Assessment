@@ -34,6 +34,10 @@ because they are the defaults of widely used software:\tabular{lll}{
 
 The results match \code{\link[stats:quantile]{stats::quantile()}} with the same \code{type}.
 
+In the case where there is double programming between two software packages,
+adjusting the type can align the result returned in R with that of the
+alternative software used in the double programming effort.
+
 \strong{Edge cases}
 \itemize{
 \item Missing values (\code{NA}, \code{NaN}): returns \code{NA} unless \code{na.rm = TRUE}.

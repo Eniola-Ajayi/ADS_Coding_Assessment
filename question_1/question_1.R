@@ -21,7 +21,7 @@ library(descriptiveStats)
 
 data <- c(1, 2, 2, 3, 4, 5, 5, 5, 6, 10)
 
-df <- data.frame(
+dataframe1 <- data.frame(
   ndose   = c(1, 2, 2, 3, 4, 5, 5, 5, 6, 10),
   usubjid = c("001", "002", "003","004", "005", "006", "007", "008","009", "010"),
   age     = c(34, 51, 47,34, 51, 47,34, 51, 47, 47),
@@ -42,11 +42,11 @@ calc_q1(data, type = 2)  # 2
 calc_q3(data, type = 2)  # 5
 
 # Edge cases
-calc_mode(c(1, 1, 2, 2, 3))         # ties: 1 2
-calc_mode(c(4, 8, 15))              # no mode: NA
-calc_mean(c(2, NA, 4))              # NA
-calc_mean(c(2, NA, 4), na.rm = TRUE) # 3
-try(calc_mean("a"))                 # informative error
+calc_mode(c(1, 1, 2, 2, 3))         # result when more than one qualifying value for mode -> ties: 1 2
+calc_mode(c(4, 8, 15))              # result when no mode-> NA
+calc_mean(c(2, NA, 4))              # result when missing values without requesting they be removed by declaring na.rm=TRUE->NA
+calc_mean(c(2, NA, 4), na.rm = TRUE) #result when missing values present in vector but removed-> 3
+try(calc_mean("a"))                 # informative error when invalid input applied to function
 
 # Beyond the brief: data frames, overall or by group (like PROC MEANS + CLASS)
 adsl <- pharmaverseadam::adsl
@@ -57,5 +57,5 @@ describe_stats(pharmaverseadam::adsl, vars = "AGE", by = "TRT01P")
 
 table1<-describe_stats(pharmaverseadam::adsl, vars = "AGE", by = "TRT01P")
 
-table2<-describe_stats(df, vars = "age", by = "trt")
+table2<-describe_stats(dataframe1, vars = "age", by = "trt")
 

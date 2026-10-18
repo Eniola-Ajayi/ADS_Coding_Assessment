@@ -28,16 +28,18 @@
 #'
 #' calc_median(c(3, NA, 1), na.rm = TRUE)
 calc_median <- function(x, na.rm = FALSE) {
-  input <- check_numeric_input(x, na.rm = na.rm)
-  if (input$has_na) return(NA_real_)
-  if (input$is_empty) return(empty_result("calc_median"))
+  input <- check_numeric_input(x, na.rm = na.rm) #check validity of vector for processing
+  if (input$has_na) return(NA_real_) #exit here if missing values present and user has not declared to remove them
+  if (input$is_empty) return(empty_result("calc_median")) #exit here with a warning if there are no values left to process
 
   x <- sort(input$x)
   n <- length(x)
-  middle <- (n + 1L) %/% 2L
+  middle <- (n + 1L) %/% 2L #position of middle value
 
+#if length is odd then then middle value is the median
   if (n %% 2L == 1L) {
     x[middle]
+#if even then the median is the average of the elements at middle position (m) and m+1
   } else {
     (x[middle] + x[middle + 1L]) / 2
   }

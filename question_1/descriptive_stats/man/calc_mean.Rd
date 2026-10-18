@@ -16,26 +16,26 @@ Defaults to \code{FALSE}, consistent with base R.}
 A single numeric value (double), or \code{NA} as described above.
 }
 \description{
-Computes the arithmetic mean (the sum of the values divided by how many
+Computes the arithmetic mean (the sum of the values divided by how many values
 there are) of a numeric vector.
 }
 \details{
-The mean is calculated in two passes: a first estimate \code{sum(x) / n}, then a
-correction for floating-point rounding error, \code{mean + sum(x - mean) / n}.
+The mean is calculated in two passes: a first estimate (1)\code{sum(x) / n}, then a
+correction for floating-point rounding error, (2) \code{mean + sum(x - mean) / n}.
 This matches the approach used by base R's \code{\link[=mean]{mean()}} and keeps the result
 accurate for long vectors and for values of very different magnitudes.
 Integer input is converted to double first, so very long integer vectors
 cannot overflow.
 
-\strong{Edge cases}
+\strong{Edge case handling}
 \itemize{
-\item Missing values (\code{NA}, \code{NaN}): returns \code{NA} unless \code{na.rm = TRUE}.
-\item Empty vector (or all values missing with \code{na.rm = TRUE}): returns \code{NA}
+\item Missing values in the vector (\code{NA}, \code{NaN}): returns \code{NA} unless \code{na.rm = TRUE} where alternatively, missing values will be dropped first.
+\item An Empty vector (or all values missing with \code{na.rm = TRUE}): returns \code{NA}
 with a warning.
-\item Single value: returns that value.
-\item \code{Inf}/\code{-Inf} are kept: the mean may be \code{Inf}, \code{-Inf}, or \code{NaN} when
+\item a vector with a Single value: returns that value alone.
+\item Infinity: \code{Inf}/\code{-Inf}  are kept: the mean may be \code{Inf}, \code{-Inf}, or \code{NaN} when
 both are present.
-\item Non-numeric input (character, factor, logical, list, \code{NULL}): error.
+\item Non-numeric input (character, factor, logical, list, \code{NULL}): results in an error.
 }
 }
 \examples{

@@ -37,19 +37,19 @@
 #' # No mode: every value appears equally often
 #' calc_mode(c(4, 8, 15))
 calc_mode <- function(x, na.rm = FALSE) {
-  input <- check_numeric_input(x, na.rm = na.rm)
-  if (input$has_na) return(NA_real_)
-  if (input$is_empty) return(empty_result("calc_mode"))
+  input <- check_numeric_input(x, na.rm = na.rm) #check validity of vector for processing
+  if (input$has_na) return(NA_real_) #exit here if missing values present and user has not declared to remove them
+  if (input$is_empty) return(empty_result("calc_mode")) #exit here with a warning if there are no values left to process
 
   x <- input$x
-  values <- sort(unique(x))
-  counts <- tabulate(match(x, values), nbins = length(values))
-  top <- max(counts)
+  values <- sort(unique(x)) #sort values and remove duplciates to get list of distinct values
+  counts <- tabulate(match(x, values), nbins = length(values)) #find and count how many times each value appears in the input vector
+  top <- max(counts)#count for most frequent value
 
   # More than one distinct value, all equally frequent -> no mode
   if (length(values) > 1L && all(counts == top)) {
     return(NA_real_)
   }
 
-  values[counts == top]
+  values[counts == top] #return values with corresponding top count
 }
