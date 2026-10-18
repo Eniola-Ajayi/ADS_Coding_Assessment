@@ -41,6 +41,9 @@ from pydantic import BaseModel, Field, ValidationError, field_validator
 
 DEFAULT_ADAE_PATH = Path(__file__).resolve().parent.parent / "data" / "adae.csv"
 
+# adae rather than sdtm ae: it has ACTARM (sdtm ae doesn't, ARM/ACTARM are in dm), so questions
+# can mention a treatment arm, and it's the same data the question 5 api uses.
+
 # ---------------------------------------------------------------------------
 # 1. Schema definition: what each column means, in plain language.
 #    `match` controls how the filter is applied when the column is queried.

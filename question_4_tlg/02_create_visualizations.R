@@ -7,8 +7,11 @@
 # Output  : question_4_tlg/output/ae_severity_by_treatment.png
 #           question_4_tlg/output/top10_ae_incidence.png
 #
-# Note: both plots use all AE records in ADAE, matching the sample outputs in
-#       the brief (e.g. "n = 225 subjects" = all subjects with an AE record).
+# Note: the brief doesn't say whether the plots should use all AEs or TEAEs only.
+#       both plots use all AE records in ADAE, matching the sample outputs in
+#       the brief (e.g. "n = 225 subjects" = all subjects with an AE record),
+#       while the summary table (01) and listing (03) use TEAEs (TRTEMFL == "Y").
+#
 # =============================================================================
 
 library(dplyr, warn.conflicts = FALSE)

@@ -30,6 +30,9 @@ dataframe1 <- data.frame(
 )
 
 
+#note: the brief's expected values (mean 3.3, q1 2.5, q3 5.5, iqr 3) don't match this data: the values
+#sum to 43 so the mean is 4.3, and no standard quantile type gives 2.5/5.5 (they come from
+#quantile(unique(data)), i.e. duplicates dropped). standard definitions are used, checked against base R in the tests.
 calc_mean(data)    # 4.3
 calc_median(data)  # 4.5
 calc_mode(data)    # 5
@@ -53,6 +56,8 @@ adsl <- pharmaverseadam::adsl
 describe_stats(adsl, vars = "AGE")
 describe_stats(adsl, vars = "AGE", by = "TRT01A")
 describe_stats(adsl, vars = "AGE", by = c("TRT01A", "SEX"), type = 2)  # SAS quartiles
+#validated: by planned arm (TRT01P), n, mean and median of AGE match CDISC Pilot Table 14-2.01
+#a unit test checks this on every run.
 describe_stats(pharmaverseadam::adsl, vars = "AGE", by = "TRT01P")
 
 table1<-describe_stats(pharmaverseadam::adsl, vars = "AGE", by = "TRT01P")

@@ -63,35 +63,13 @@ study_ct <- read.csv(
   na.strings = ""
 )
 
-study_ct1  <- 
-  data.frame( 
-    stringsAsFactors  =  FALSE, 
-    codelist_code  =  c("C66727","C66727", 
-                        "C66727","C66727","C66727","C66727","C66727","C66727", 
-                        "C66727","C66727"), 
-    term_code  =  c("C41331","C25250", 
-                    "C28554","C48226","C48227","C48250","C142185","C49628", 
-                    "C49632","C49634"), 
-    term_value  =  c("ADVERSE  EVENT", 
-                     "COMPLETED","DEATH","LACK  OF  EFFICACY","LOST  TO 
-FOLLOW-UP", 
-                     "PHYSICIAN  DECISION","PROTOCOL  VIOLATION", 
-                     "SCREEN  FAILURE","STUDY  TERMINATED  BY  SPONSOR", 
-                     "WITHDRAWAL  BY  SUBJECT"), 
-    collected_value  =  c("Adverse  Event", 
-                          "Complete","Dead","Lack  of  Efficacy","Lost  To 
-Follow-Up", 
-                          "Physician  Decision","Protocol  Violation", 
-                          "Trial  Screen  Failure","Study  Terminated  By  Sponsor", 
-                          "Withdrawal  by  Subject"), 
-    term_preferred_term  =  c("AE","Completed","Died", 
-                              NA,NA,NA,"Violation", 
-                              "Failure  to  Meet  Inclusion/Exclusion 
-Criteria",NA,"Dropout"), 
-    term_synonyms  =  c("ADVERSE  EVENT", 
-                        "COMPLETE","Death",NA,NA,NA,NA,NA,NA, 
-                        "Discontinued  Participation") 
-  )
+#note on the "terms could not be mapped per the controlled terminology" messages in the log:
+#assign_ct() only maps raw values that exactly match (case-sensitive) collected_value or term_synonyms,
+#e.g. raw "Completed" vs "Complete", "Screen Failure" vs "Trial Screen Failure", and unscheduled visits
+#not in the VISIT codelist. unmatched values fall back to upper case, which gives the correct CDISC
+#values (step 9 QC: 850/850 match). "Randomized" is also listed but is hardcoded in step 5 (a).
+#fix: add the raw spellings to term_synonyms in sdtm_ct.csv so every value maps exactly.
+
 # -----------------------------------------------------------------------------
 # 4. Map the topic variable: DSTERM
 #    Disposition events and protocol milestones: the collected reason

@@ -17,6 +17,9 @@ import pandas as pd
 # Can be overridden with the ADAE_PATH environment variable.
 DEFAULT_ADAE_PATH = Path(__file__).resolve().parent.parent / "data" / "adae.csv"
 
+# adae rather than sdtm ae: the treatment arm filter needs ACTARM, which sdtm ae doesn't have
+# (ARM/ACTARM are in dm). adae carries ACTARM on every ae record, so no join to dm is needed.
+
 REQUIRED_COLUMNS = {"USUBJID", "AESEV", "ACTARM"}
 
 # Points per adverse event, by severity (AESEV)
