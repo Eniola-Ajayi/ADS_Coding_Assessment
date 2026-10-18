@@ -27,6 +27,16 @@ how the question was understood, for example
 
 so the answer can be checked rather than taken on trust.
 
+### Screenshots
+
+**Ask a question**
+
+![The Ask a question tab](screenshots/ask.png)
+
+**Risk overview**
+
+![The Risk overview tab](screenshots/risk_overview.png)
+
 ## From one filter to several
 
 Question 6, as the brief asks, turns a question into **one** filter
