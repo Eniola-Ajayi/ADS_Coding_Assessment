@@ -147,3 +147,5 @@ without changing any of the answers.
   on placebo"), building on the Question 6 agent. It reuses the Question 5 and
   6 code unchanged, adds four endpoints, and has its own tests.
 
+![Risk overview in the investigator app](extensions/investigator_app/screenshots/risk_overview.png)
+
