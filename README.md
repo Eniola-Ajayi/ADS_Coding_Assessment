@@ -1,5 +1,7 @@
 # ADS Coding Assessment
 
+[![Tests](https://github.com/Eniola-Ajayi/ADS_Coding_Assessment/actions/workflows/tests.yml/badge.svg)](https://github.com/Eniola-Ajayi/ADS_Coding_Assessment/actions/workflows/tests.yml)
+
 Solutions to the six questions of the Analytical Data Science coding
 assessment: R package development, SDTM/ADaM/TLG programming with the
 pharmaverse, and two Python applications.
@@ -10,6 +12,7 @@ pharmaverse, and two Python applications.
 .
 |-- README.md                  this file
 |-- run_all.R                  runs every R deliverable from scratch, logs to run_all_log.txt
+|-- .github/workflows/         tests.yml: runs every check on each push (GitHub Actions)
 |-- data/
 |   |-- export_adae.R          exports pharmaverseadam::adae -> data/adae.csv (input for Q5, Q6)
 |   `-- adae.csv
@@ -58,6 +61,18 @@ See `question_5_api/README.md` and `question_6_genai/README.md`. In short:
 cd question_5_api && pip install -r requirements.txt && uvicorn main:app --reload
 cd question_6_genai && pip install -r requirements.txt && python test_agent.py
 ```
+
+## Automated checks
+
+Every push to GitHub runs `.github/workflows/tests.yml` (GitHub Actions) on a
+fresh Linux machine, so the badge at the top shows whether everything still
+works:
+
+* **R:** `R CMD check` of the Question 1 package, including its unit tests,
+  then the Question 2-4 scripts and the ADAE export. Each script stops with an
+  error if one of its own checks fails.
+* **Python:** the Question 5 API tests, the Question 6 example questions (with
+  the offline mock, so no API key is needed) and the investigator app's tests.
 
 ## Summary of each question
 
@@ -127,6 +142,8 @@ without changing any of the answers.
 * **[Investigator app](extensions/investigator_app/README.md)**: *AE Safety
   Explorer*, a Streamlit web app that uses the Question 5 API as its backend.
   Investigators can find cohorts, see which subjects need attention first and
-  open a subject's AE history, without writing code. It reuses the Question 5
-  code unchanged, adds three read-only endpoints, and has its own tests.
+  open a subject's AE history, without writing code. It also answers
+  plain-English questions that can combine conditions (e.g. "severe headaches
+  on placebo"), building on the Question 6 agent. It reuses the Question 5 and
+  6 code unchanged, adds four endpoints, and has its own tests.
 
