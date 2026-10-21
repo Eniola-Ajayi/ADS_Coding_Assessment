@@ -149,3 +149,8 @@ without changing any of the answers.
 
 ![Risk overview in the investigator app](extensions/investigator_app/screenshots/risk_overview.png)
 
+## Use of AI
+As allowed by the assessment brief - AI (Claude) was used to accelerate my learning of unfamiliar concepts
+and, create draft programs for me to meticulously review and update with the assessments requirements
+as well as my own professional opinion in mind.
+
