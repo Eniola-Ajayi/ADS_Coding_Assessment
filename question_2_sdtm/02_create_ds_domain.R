@@ -268,23 +268,36 @@ print(count(ds, VISITNUM, VISIT))
 #    re-derived DS should reproduce it. Records are matched on subject, decode
 #    and start date, then each variable is compared.
 # -----------------------------------------------------------------------------
+
+#reference dataset to check against; "" turned into NA so blanks compare the same way as in ds
 reference <- pharmaversesdtm::ds %>%
   mutate(across(where(is.character), ~ na_if(.x, "")))
 
+#variables used to match records between the two datasets, and the variables then compared
 key <- c("USUBJID", "DSDECOD", "DSSTDTC")
 compare_vars <- c("STUDYID", "DSTERM", "DSCAT", "VISITNUM", "VISIT", "DSDTC", "DSSTDY")
+
+#match ds to reference on the key (like a merge keeping only records in both, if a and b).
+#reference copies of each variable get the suffix .ref, e.g. VISIT and VISIT.ref side by side.
+#many-to-many: a subject can have more than one record with the same decode and date
+#somewhat similar to sql
 
 comparison <- inner_join(
   ds, reference,
   by = key, suffix = c("", ".ref"), relationship = "many-to-many"
 )
 
+#TRUE where two values match. both missing counts as a match
+#(a plain a == b gives NA when either value is missing).
+#values are compared as text so numbers and dates compare the same way
 same_value <- function(a, b) {
   a <- as.character(a)
   b <- as.character(b)
   (is.na(a) & is.na(b)) | (!is.na(a) & !is.na(b) & a == b)
 }
 
+#one row per compared variable: how many records were compared and how many matched.
+#vapply loops over compare_vars, counting the matches between v and v.ref for each
 qc_summary <- tibble(
   variable = compare_vars,
   records_compared = nrow(comparison),

@@ -267,6 +267,10 @@ complete_date <- function(dtc) {
   as.Date(ifelse(grepl("^[0-9]{4}-[0-9]{2}-[0-9]{2}", dtc), substr(dtc, 1, 10), NA_character_))
 }
 
+#independent re-derivation of LSTALVDT without admiral: stack every candidate date
+#(vs with a valid result, ae start, ds start, last treatment date) into one long table,
+#like a set of the four sources, keep complete dates only, then take each subject's latest date
+
 lstalvdt_check <- bind_rows(
   vs %>%
     filter(!(is.na(VSSTRESN) & is.na(VSSTRESC))) %>%
@@ -287,6 +291,8 @@ cardiac_subjects <- ae %>%
   filter(toupper(AESOC) == "CARDIAC DISORDERS") %>%
   pull(USUBJID)
 
+#re-derive the spec-specific variables from dm with plain dplyr, one row per subject.
+#.ref names mark them as the check values. %in% checks whether each subject is in the lists above
 flags_check <- dm %>%
   transmute(
     USUBJID,
@@ -298,6 +304,9 @@ flags_check <- dm %>%
   )
 flag_vars <- c("AGEGR9", "AGEGR9N", "ITTFL", "ABNSBPFL", "CARPOPFL")
 
+#one row per subject with each derived variable next to its check value (e.g. ITTFL and ITTFL.ref):
+#treatment dates come from pharmaverseadam::adsl (inner join, subjects in both),
+#then the re-derived values are added (left joins, like merges keeping all adsl subjects)
 qc <- adsl %>%
   select(STUDYID, USUBJID, all_of(c(trt_vars, "LSTALVDT", flag_vars))) %>%
   inner_join(
