@@ -29,7 +29,10 @@ uvicorn main:app --reload
 
 Open <http://127.0.0.1:8000/docs> for the interactive Swagger UI.
 
-Run the tests with `python -m pytest -v`.
+#pytest detects files named with the prefix "test_" and-
+#runs all the tests within similar to devtools:: test() as seen in R
+
+Run the tests with `python -m pytest -v`. 
 
 ## Endpoints
 
