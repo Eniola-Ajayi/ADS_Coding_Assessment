@@ -43,7 +43,7 @@ pharmaverse, and two Python applications.
 
 ## Running the R questions
 
-R >= 4.2. Set the working directory to the repository root, then:
+for R versions of 4.2. and newer Set the working directory to the repository root, then:
 
 ```r
 source("run_all.R")

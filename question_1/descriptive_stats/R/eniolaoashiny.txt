@@ -1,0 +1,8 @@
+eniolaoashiny
+
+library(rsconnect)
+    rsconnect::deployApp("C:/Users/Eniola/Documents/trial-explorer")
+
+
+rsconnect::setAccountInfo(name='eniolaoashiny', token='EAD33A122C0C3275DE46C42A9DAB3C93', secret='QCAUaeN50PcIBSDdxRVR4ysSvN7b9AZAu/Q4ILBc')
+rsconnect::deployApp()
